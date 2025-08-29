@@ -1,0 +1,19 @@
+---
+# TrashMinder AppDaemon Configuration
+# This app monitors trash bin placement using computer vision
+trashminder:
+  module: trashminder
+  class: TrashMinder
+  
+  # Camera entity ID to capture images from
+  camera_entity: camera.front_yard
+  
+  # OpenAI API key for GPT-4o image analysis
+  openai_api_key: !secret openai_api_key
+  
+  # Pushover configuration for notifications
+  pushover_user_key: !secret pushover_user_key
+  pushover_api_token: !secret pushover_api_token
+  
+  # Test mode - runs every minute instead of weekly schedule
+  test_mode: false
