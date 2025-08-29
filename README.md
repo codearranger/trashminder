@@ -106,18 +106,7 @@ pushover_api_token: "axxxxxxxxxxxxx"
      test_mode: false
    ```
 
-### Step 4: Add to Apps Configuration
-
-Add TrashMinder to your main apps configuration:
-
-```yaml
-# /addon_configs/a0d7b954_appdaemon/apps/apps.yaml
-trashminder:
-  module: trashminder
-  class: TrashMinder
-```
-
-### Step 5: Restart AppDaemon
+### Step 4: Restart AppDaemon
 
 Restart the AppDaemon add-on to load TrashMinder:
 1. Go to **Settings** → **Add-ons** → **AppDaemon**
