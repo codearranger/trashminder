@@ -102,6 +102,12 @@ pushover_api_token: "axxxxxxxxxxxxx"
      pushover_user_key: !secret pushover_user_key
      pushover_api_token: !secret pushover_api_token
      
+     # Schedule configuration (optional - these are the defaults)
+     start_day: wed           # Day to start monitoring (mon, tue, wed, thu, fri, sat, sun)
+     start_time: "15:00:00"   # Time to start (24-hour format)
+     end_day: thu             # Day to end monitoring
+     end_time: "09:00:00"     # Time to end (24-hour format)
+     
      # Set to true for testing (checks every minute)
      test_mode: false
    ```
@@ -120,6 +126,10 @@ Restart the AppDaemon add-on to load TrashMinder:
 | `openai_api_key` | Yes | - | OpenAI API key for GPT-4o access |
 | `pushover_user_key` | Yes | - | Pushover user key for notifications |
 | `pushover_api_token` | Yes | - | Pushover API token |
+| `start_day` | No | `wed` | Day of week to start monitoring (mon, tue, wed, thu, fri, sat, sun) |
+| `start_time` | No | `15:00:00` | Time to start monitoring (24-hour format) |
+| `end_day` | No | `thu` | Day of week to end monitoring |
+| `end_time` | No | `09:00:00` | Time to end monitoring (24-hour format) |
 | `test_mode` | No | `false` | Enable test mode (checks every minute) |
 
 ## Testing
@@ -134,9 +144,15 @@ Enable test mode to verify everything is working:
 ## Monitoring Schedule
 
 **Normal Mode:**
-- Starts: Wednesday 3:00 PM
-- Ends: Thursday 9:00 AM  
+- Starts: Configurable day and time (default: Wednesday 3:00 PM)
+- Ends: Configurable day and time (default: Thursday 9:00 AM)  
 - Frequency: Hourly checks with ±5 minute random offset
+
+You can customize the monitoring schedule to match your trash collection day. For example, if your trash is collected on Monday morning, you could set:
+- `start_day: sun`
+- `start_time: "15:00:00"` 
+- `end_day: mon`
+- `end_time: "09:00:00"`
 
 **Test Mode:**
 - Runs every 60 seconds continuously

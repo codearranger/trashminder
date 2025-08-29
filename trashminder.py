@@ -5,7 +5,7 @@ This app:
 - Captures images from camera.front_yard every hour during the monitoring window
 - Uses GPT-4o to analyze if the trash bin is near the street
 - Sends Pushover notifications if the trash bin is not detected
-- Only operates from 3pm Wednesday to 9am Thursday
+- Operates during a configurable monitoring window (default: 3pm Wednesday to 9am Thursday)
 """
 
 import appdaemon.plugins.hass.hassapi as hass
@@ -28,6 +28,12 @@ class TrashMinder(hass.Hass):
         self.pushover_user_key = self.args.get("pushover_user_key")
         self.pushover_api_token = self.args.get("pushover_api_token")
         self.test_mode = self.args.get("test_mode", False)
+        
+        # Get schedule configuration
+        self.start_day = self.args.get("start_day", "wed")
+        self.start_time = self.args.get("start_time", "15:00:00")
+        self.end_day = self.args.get("end_day", "thu")
+        self.end_time = self.args.get("end_time", "09:00:00")
         
         # Debug logging (sanitized - no secrets)
         sanitized_args = {k: "***REDACTED***" if "key" in k.lower() or "token" in k.lower() else v for k, v in self.args.items()}
@@ -66,14 +72,14 @@ class TrashMinder(hass.Hass):
             )
             self.log("TEST MODE: Monitoring every 60 seconds starting in 10 seconds")
         else:
-            # Normal mode: Schedule to start monitoring at 3pm every Wednesday
-            # Using run_daily with constrain_days for Wednesday only
+            # Normal mode: Schedule to start monitoring at configured time and day
+            # Using run_daily with constrain_days for the configured start day
             self.run_daily(
                 self.start_monitoring,
-                "15:00:00",  # 3pm
-                constrain_days="wed"
+                self.start_time,
+                constrain_days=self.start_day
             )
-            self.log("Monitoring schedule set up - will start at 3pm every Wednesday")
+            self.log(f"Monitoring schedule set up - will start at {self.start_time} every {self.start_day.title()}")
     
     def check_trash_bin_test(self, kwargs):
         """Test mode version that runs every minute"""
@@ -86,12 +92,42 @@ class TrashMinder(hass.Hass):
         
         self.log("Starting trash bin monitoring cycle")
         
-        # Schedule hourly checks for the next 18 hours (3pm Wed to 9am Thu)
-        for hour_offset in range(18):  # 18 hours from 3pm Wed to 9am Thu
+        # Map day names to weekday numbers
+        day_map = {
+            'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3,
+            'fri': 4, 'sat': 5, 'sun': 6
+        }
+        
+        # Get start and end day numbers
+        start_day_num = day_map.get(self.start_day.lower(), 2)  # Default to Wednesday
+        end_day_num = day_map.get(self.end_day.lower(), 3)  # Default to Thursday
+        
+        # Parse end time to get the hour
+        end_hour = int(self.end_time.split(':')[0])
+        
+        # Calculate total hours to monitor
+        # If end day is after start day in the same week
+        if end_day_num > start_day_num:
+            days_diff = end_day_num - start_day_num
+        else:
+            # Wraps around the week (e.g., Saturday to Monday)
+            days_diff = (7 - start_day_num) + end_day_num
+        
+        # Get current hour
+        start_hour = int(self.start_time.split(':')[0])
+        
+        # Calculate total monitoring hours
+        total_hours = (days_diff * 24) - start_hour + end_hour
+        
+        # Schedule hourly checks
+        for hour_offset in range(total_hours):
             check_time = datetime.now() + timedelta(hours=hour_offset)
             
-            # Stop at 9am Thursday
-            if check_time.weekday() == 3 and check_time.hour >= 9:  # Thursday and 9am or later
+            # Check if we've reached the end time
+            if days_diff == 0:  # Same day
+                if check_time.hour >= end_hour:
+                    break
+            elif check_time.weekday() == end_day_num and check_time.hour >= end_hour:
                 break
                 
             # Use run_in with proper random parameter (single random value in seconds)
@@ -102,7 +138,7 @@ class TrashMinder(hass.Hass):
                 random_end=300
             )
         
-        self.log(f"Scheduled 18 hourly trash bin checks starting now")
+        self.log(f"Scheduled {min(hour_offset + 1, total_hours)} hourly trash bin checks starting now")
     
     def check_trash_bin(self, kwargs):
         """Check if trash bin is near the street"""

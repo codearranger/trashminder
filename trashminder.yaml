@@ -15,5 +15,15 @@ trashminder:
   pushover_user_key: !secret pushover_user_key
   pushover_api_token: !secret pushover_api_token
   
+  # Schedule configuration
+  # Day of week to start monitoring (mon, tue, wed, thu, fri, sat, sun)
+  start_day: wed
+  # Time to start monitoring (24-hour format)
+  start_time: "15:00:00"  # 3:00 PM
+  # Day of week to end monitoring
+  end_day: thu
+  # Time to end monitoring (24-hour format)
+  end_time: "09:00:00"  # 9:00 AM
+  
   # Test mode - runs every minute instead of weekly schedule
   test_mode: false
