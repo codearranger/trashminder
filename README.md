@@ -43,7 +43,7 @@ graph TD
 
 1. **Home Assistant** with AppDaemon add-on installed
 2. **Camera Entity** configured in Home Assistant (e.g., `camera.front_yard`)
-3. **OpenAI API Key** with GPT-4o access
+3. **OpenAI API Key** with GPT-4o access https://platform.openai.com/api-keys
 4. **Pushover Account** with API token and user key
 
 ### Step 1: Install AppDaemon
