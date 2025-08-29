@@ -36,6 +36,7 @@ graph TD
 - ⏰ **Smart Scheduling**: Monitors from Wednesday 3 PM to Thursday 9 AM (customizable)
 - 🧪 **Test Mode**: Run checks every minute for testing and validation
 - 📊 **Confidence Scoring**: Reports detection confidence levels (high/medium/low)
+- 🏠 **Home Assistant Entity**: Creates `binary_sensor.trashminder_trash_bin_present` for automation integration
 
 ## Installation
 
@@ -214,6 +215,27 @@ Feel free to submit issues and enhancement requests!
 ## License
 
 This project is provided as-is for personal use. Modify and distribute as needed.
+
+## Home Assistant Entity
+
+TrashMinder creates a binary sensor entity that you can use in automations and dashboards:
+
+**Entity ID:** `binary_sensor.trashminder_trash_bin_present`
+
+**States:**
+- `on`: Trash bin detected at the curb
+- `off`: Trash bin not detected (or monitoring window ended)
+
+**Attributes:**
+- `friendly_name`: "Trash Bin at Curb"
+- `device_class`: "presence"
+- `icon`: Changes based on detection status
+- `last_checked`: Timestamp of last check
+- `confidence`: Detection confidence (high/medium/low)
+- `description`: Description of what was detected
+- `detected`: Boolean detection status
+
+The entity automatically resets to `off` when the monitoring window ends.
 
 ## Support
 

@@ -51,6 +51,18 @@ class TrashMinder(hass.Hass):
             
         # Initialize OpenAI client
         self.openai_client = OpenAI(api_key=self.openai_api_key)
+        
+        # Initialize Home Assistant entity for trash bin status
+        self.entity_id = "binary_sensor.trashminder_trash_bin_present"
+        self.set_state(self.entity_id, state="off", attributes={
+            "friendly_name": "Trash Bin at Curb",
+            "device_class": "presence",
+            "icon": "mdi:trash-can",
+            "last_checked": None,
+            "confidence": None,
+            "description": "No check performed yet"
+        })
+        self.log(f"Created entity: {self.entity_id}")
             
         # Set up the monitoring schedule
         self.setup_monitoring_schedule()
@@ -91,6 +103,16 @@ class TrashMinder(hass.Hass):
         """Start the hourly monitoring cycle"""
         
         self.log("Starting trash bin monitoring cycle")
+        
+        # Reset the entity state at the start of monitoring
+        self.set_state(self.entity_id, state="off", attributes={
+            "friendly_name": "Trash Bin at Curb",
+            "device_class": "presence",
+            "icon": "mdi:trash-can",
+            "last_checked": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "confidence": None,
+            "description": "Monitoring started"
+        })
         
         # Map day names to weekday numbers
         day_map = {
@@ -139,6 +161,11 @@ class TrashMinder(hass.Hass):
             )
         
         self.log(f"Scheduled {min(hour_offset + 1, total_hours)} hourly trash bin checks starting now")
+        
+        # Schedule a callback to reset the entity when monitoring ends
+        end_offset_seconds = total_hours * 3600
+        self.run_in(self.end_monitoring, end_offset_seconds)
+        self.log(f"Scheduled monitoring end in {total_hours} hours")
     
     def check_trash_bin(self, kwargs):
         """Check if trash bin is near the street"""
@@ -160,6 +187,19 @@ class TrashMinder(hass.Hass):
             trash_bin_detected = analysis_result["detected"]
             confidence = analysis_result["confidence"]
             description = analysis_result["description"]
+            
+            # Update Home Assistant entity with the detection status
+            entity_state = "on" if trash_bin_detected else "off"
+            self.set_state(self.entity_id, state=entity_state, attributes={
+                "friendly_name": "Trash Bin at Curb",
+                "device_class": "presence",
+                "icon": "mdi:trash-can" if trash_bin_detected else "mdi:trash-can-outline",
+                "last_checked": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "confidence": confidence,
+                "description": description,
+                "detected": trash_bin_detected
+            })
+            self.log(f"Updated entity {self.entity_id}: state={entity_state}, confidence={confidence}")
             
             # Log the results
             if self.test_mode:
@@ -392,6 +432,19 @@ Return a JSON response with a boolean indicating whether a trash bin is clearly 
             
         except Exception as e:
             self.log(f"Error sending test Pushover notification: {str(e)}", level="ERROR")
+    
+    def end_monitoring(self, kwargs):
+        """Reset the entity state when monitoring window ends"""
+        self.log("Monitoring window ended, resetting trash bin status")
+        self.set_state(self.entity_id, state="off", attributes={
+            "friendly_name": "Trash Bin at Curb",
+            "device_class": "presence",
+            "icon": "mdi:trash-can-outline",
+            "last_checked": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "confidence": None,
+            "description": "Monitoring window ended"
+        })
+        self.log(f"Reset entity {self.entity_id} to off state")
     
     def terminate(self):
         """Clean up when app is terminated"""
