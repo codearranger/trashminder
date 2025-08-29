@@ -43,16 +43,28 @@ graph TD
 
 1. **Home Assistant** with AppDaemon add-on installed
 2. **Camera Entity** configured in Home Assistant (e.g., `camera.front_yard`)
-3. **OpenAI API Key** with GPT-4o access https://platform.openai.com/api-keys
-4. **Pushover Account** with API token and user key https://pushover.net/
+3. **OpenAI API Key** with GPT-4o access
+4. **Pushover Account** with API token and user key
 
-### Step 1: Install AppDaemon
+### Step 1: Install and Configure AppDaemon
 
-If not already installed, add the AppDaemon add-on in Home Assistant:
+1. **Install AppDaemon** (if not already installed):
+   - Navigate to **Settings** → **Add-ons** → **Add-on Store**
+   - Search for "AppDaemon" and install it
 
-1. Navigate to **Settings** → **Add-ons** → **Add-on Store**
-2. Search for "AppDaemon" and install it
-3. Start the AppDaemon add-on
+2. **Add Required Python Package**:
+   - Go to **Settings** → **Add-ons** → **AppDaemon** → **Configuration**
+   - Or navigate directly to: http://homeassistant:8123/hassio/addon/a0d7b954_appdaemon/config
+   - In the configuration page, add the OpenAI package:
+     ```yaml
+     python_packages:
+       - openai
+     ```
+   - Click **Save**
+
+3. **Start AppDaemon**:
+   - Click **Start** (or **Restart** if already running)
+   - The OpenAI package will be installed automatically on startup
 
 ### Step 2: Configure Secrets
 
@@ -153,21 +165,26 @@ docker logs addon_a0d7b954_appdaemon
 
 ### Common Issues
 
-1. **"No SUPERVISOR_TOKEN found"**
+1. **"ModuleNotFoundError: No module named 'openai'"**
+   - Ensure you added `openai` to the `python_packages` in AppDaemon configuration
+   - Restart AppDaemon after adding the package
+   - Check AppDaemon logs to confirm the package installed successfully
+
+2. **"No SUPERVISOR_TOKEN found"**
    - Ensure AppDaemon has proper Home Assistant integration
    - Restart the AppDaemon add-on
 
-2. **Camera image capture fails**
+3. **Camera image capture fails**
    - Verify camera entity ID is correct
    - Check camera is accessible in Home Assistant
    - Ensure AppDaemon has permission to access the camera
 
-3. **GPT-4o API errors**
+4. **GPT-4o API errors**
    - Verify OpenAI API key is valid
    - Check you have GPT-4o access on your OpenAI account
    - Monitor API usage limits
 
-4. **Pushover notifications not received**
+5. **Pushover notifications not received**
    - Verify Pushover credentials are correct
    - Check Pushover app is installed on your device
    - Test Pushover separately using their API
