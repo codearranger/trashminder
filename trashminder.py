@@ -102,6 +102,20 @@ class TrashMinder(hass.Hass):
     def start_monitoring(self, kwargs):
         """Start the hourly monitoring cycle"""
         
+        # Map day names to weekday numbers
+        day_map = {
+            'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3,
+            'fri': 4, 'sat': 5, 'sun': 6
+        }
+        
+        # Verify we're on the correct day (constrain_days seems unreliable)
+        current_day = datetime.now().weekday()
+        expected_day = day_map.get(self.start_day.lower(), 2)
+        
+        if current_day != expected_day:
+            self.log(f"Skipping monitoring - today is {datetime.now().strftime('%A')} but configured for {self.start_day.title()}")
+            return
+        
         self.log("Starting trash bin monitoring cycle")
         
         # Reset the entity state at the start of monitoring
@@ -114,13 +128,7 @@ class TrashMinder(hass.Hass):
             "description": "Monitoring started"
         })
         
-        # Map day names to weekday numbers
-        day_map = {
-            'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3,
-            'fri': 4, 'sat': 5, 'sun': 6
-        }
-        
-        # Get start and end day numbers
+        # Get start and end day numbers (using day_map from above)
         start_day_num = day_map.get(self.start_day.lower(), 2)  # Default to Wednesday
         end_day_num = day_map.get(self.end_day.lower(), 3)  # Default to Thursday
         
