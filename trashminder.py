@@ -280,14 +280,25 @@ class TrashMinder(hass.Hass):
                         "content": [
                             {
                                 "type": "text",
-                                "text": """Analyze this image and determine if there is a trash bin/garbage can positioned near or at the street/curb for pickup.
+                                "text": """Analyze this image and determine if there is a trash bin/garbage can positioned for pickup on THIS property (the side of the street where the camera is located).
+
+IMPORTANT: Only detect bins that are:
+- On the SAME side of the street as the camera (not across the street)
+- In the foreground/near side of the image (not on neighboring properties across the street)
+- Positioned at or near the curb/street edge for collection
+- Clearly intended for pickup from THIS property
 
 Look for:
-- Wheeled garbage bins or trash cans
-- Bins positioned at or near the curb/street edge
-- Typical residential waste containers
+- Wheeled garbage bins or trash cans on our property's curb
+- Bins positioned at the street edge in front of this house
+- Typical residential waste containers ready for collection
 
-Return a JSON response with a boolean indicating whether a trash bin is clearly visible and positioned near the street for pickup (not just anywhere in the image, but specifically positioned for collection)."""
+Do NOT count bins that are:
+- Across the street at other properties
+- On neighboring properties
+- In the background on the opposite side of the street
+
+Return a JSON response indicating whether a trash bin from THIS property is positioned for pickup."""
                             },
                             {
                                 "type": "image_url",
@@ -307,7 +318,7 @@ Return a JSON response with a boolean indicating whether a trash bin is clearly 
                             "properties": {
                                 "trash_bin_present": {
                                     "type": "boolean",
-                                    "description": "True if a trash bin is clearly visible and positioned near the street/curb for pickup, False otherwise"
+                                    "description": "True if a trash bin from THIS property (not across the street) is positioned at the curb for pickup, False otherwise"
                                 },
                                 "confidence": {
                                     "type": "string",
