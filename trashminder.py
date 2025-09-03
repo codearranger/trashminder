@@ -63,6 +63,9 @@ class TrashMinder(hass.Hass):
             "description": "No check performed yet"
         })
         self.log(f"Created entity: {self.entity_id}")
+        
+        # Track if we've already sent a detection notification this cycle
+        self.first_detection_sent = False
             
         # Set up the monitoring schedule
         self.setup_monitoring_schedule()
@@ -117,6 +120,9 @@ class TrashMinder(hass.Hass):
             return
         
         self.log("Starting trash bin monitoring cycle")
+        
+        # Reset tracking flag for this monitoring cycle
+        self.first_detection_sent = False
         
         # Reset the entity state at the start of monitoring
         self.set_state(self.entity_id, state="off", attributes={
@@ -219,6 +225,13 @@ class TrashMinder(hass.Hass):
                 self.log(f"Trash bin not detected (confidence: {confidence}) - notification sent: {description}")
             else:
                 self.log(f"Trash bin detected near street (confidence: {confidence}) - all good! {description}")
+                
+                # Send confirmation notification on first detection (not in test mode)
+                if not self.test_mode and not self.first_detection_sent:
+                    self.send_confirmation_notification(confidence, description, image_data)
+                    self.first_detection_sent = True
+                    self.log("First detection confirmation sent")
+                
                 # In test mode, send notification even when detected (to test image attachment)
                 if self.test_mode:
                     self.send_test_notification(confidence, description, image_data)
@@ -409,6 +422,50 @@ Return a JSON response indicating whether a trash bin from THIS property is posi
                 
         except Exception as e:
             self.log(f"Error sending Pushover notification: {str(e)}", level="ERROR")
+    
+    def send_confirmation_notification(self, confidence="unknown", description="", image_data=None):
+        """Send confirmation notification when trash bin is first detected"""
+        
+        try:
+            current_time = datetime.now().strftime("%I:%M %p")
+            
+            # Create confirmation message
+            message = f"✅ Trash bin detected at the curb at {current_time}!\n\n"
+            message += f"AI Analysis: {description}\n"
+            message += f"Confidence: {confidence.title()}\n\n"
+            message += "Great job! Your trash is ready for pickup."
+            
+            payload = {
+                "token": self.pushover_api_token,
+                "user": self.pushover_user_key,
+                "title": "✅ Trash Bin Confirmed",
+                "message": message,
+                "priority": 0,  # Normal priority for confirmation
+                "sound": "magic"  # Pleasant confirmation sound
+            }
+            
+            # Prepare files for attachment if image data is provided
+            files = None
+            if image_data:
+                files = {
+                    "attachment": ("confirmation_snapshot.jpg", image_data, "image/jpeg")
+                }
+                self.log("Including camera image with confirmation notification")
+            
+            response = requests.post(
+                "https://api.pushover.net/1/messages.json",
+                data=payload,
+                files=files,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                self.log("Confirmation notification sent successfully")
+            else:
+                self.log(f"Confirmation notification failed: {response.status_code} - {response.text}", level="ERROR")
+                
+        except Exception as e:
+            self.log(f"Error sending confirmation notification: {str(e)}", level="ERROR")
     
     def send_test_notification(self, confidence="unknown", description="", image_data=None):
         """Send a test notification in test mode to verify image attachment works"""
