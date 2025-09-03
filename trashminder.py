@@ -381,8 +381,10 @@ Return a JSON response indicating whether a trash bin from THIS property is posi
                 "user": self.pushover_user_key,
                 "title": "🗑️ Trash Bin Reminder",
                 "message": message,
-                "priority": 1,  # High priority
-                "sound": "pushover"
+                "priority": 2,  # Emergency priority
+                "retry": 300,  # Retry every 5 minutes
+                "expire": 10800,  # Expire after 3 hours
+                "sound": "siren"  # Use siren sound for urgency
             }
             
             # Prepare files for attachment if image data is provided
