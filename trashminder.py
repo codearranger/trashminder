@@ -3,7 +3,7 @@ TrashMinder - An AppDaemon app to monitor trash bin placement using computer vis
 
 This app:
 - Captures images from camera.front_yard every hour during the monitoring window
-- Uses GPT-4o to analyze if the trash bin is near the street
+- Uses GPT-5 vision to analyze if the trash bin is near the street
 - Sends Pushover notifications if the trash bin is not detected
 - Operates during a configurable monitoring window (default: 3pm Wednesday to 9am Thursday)
 """
@@ -194,9 +194,9 @@ class TrashMinder(hass.Hass):
                 self.log("Failed to capture camera image", level="WARNING")
                 return
             
-            self.log("Image captured successfully, analyzing with GPT-4o...")
+            self.log("Image captured successfully, analyzing with GPT-5...")
             
-            # Analyze image with GPT-4o
+            # Analyze image with GPT-5
             analysis_result = self.analyze_image_with_gpt(image_data)
             trash_bin_detected = analysis_result["detected"]
             confidence = analysis_result["confidence"]
@@ -278,60 +278,81 @@ class TrashMinder(hass.Hass):
             return None
     
     def analyze_image_with_gpt(self, image_data):
-        """Analyze the image using GPT-4o to detect trash bin placement"""
+        """Analyze the image using GPT-5 to detect trash bin placement"""
         
         try:
             # Encode image to base64
             image_base64 = base64.b64encode(image_data).decode('utf-8')
             
-            # Use OpenAI client to analyze the image with structured JSON output
-            response = self.openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
+            # Use GPT-5 with Responses API and structured outputs
+            response = self.openai_client.responses.create(
+                model="gpt-5",
+                input=[
                     {
                         "role": "user",
                         "content": [
                             {
-                                "type": "text",
-                                "text": """Analyze this image and determine if there is a trash bin/garbage can positioned for pickup on THIS property (the side of the street where the camera is located).
+                                "type": "input_text",
+                                "text": """You are analyzing a security camera image from a residential property. Your ONLY job is to detect trash/recycling bins that have been placed out for collection.
 
-IMPORTANT: Only detect bins that are:
-- On the SAME side of the street as the camera (not across the street)
-- In the foreground/near side of the image (not on neighboring properties across the street)
-- Positioned at or near the curb/street edge for collection
-- Clearly intended for pickup from THIS property
+SYSTEMATIC SCANNING PROCESS:
+1. Scan the LEFT edge of the property along the street/curb
+2. Scan the CENTER area near the driveway entrance/street
+3. Scan the RIGHT edge of the property along the street/curb
+4. Look in shadows, behind cars, partially hidden areas
+5. Check near any visible sidewalks or property boundaries
 
-Look for:
-- Wheeled garbage bins or trash cans on our property's curb
-- Bins positioned at the street edge in front of this house
-- Typical residential waste containers ready for collection
+WHAT TO LOOK FOR:
+- Rectangular or cylindrical waste containers at curb level
+- Wheeled containers (look for wheels or wheel bumps)
+- Bins partially hidden by shadows, cars, or landscaping
+- Multiple containers clustered together
+- ANY object that could be a waste container
 
-Do NOT count bins that are:
-- Across the street at other properties
-- On neighboring properties
-- In the background on the opposite side of the street
+BIN TYPES TO IDENTIFY:
+- Recycling bins (typically rectangular with wheels)
+- Garbage cans (cylindrical or rectangular)
+- Yard waste bins (often green colored)
+- Any wheeled waste containers
 
-Return a JSON response indicating whether a trash bin from THIS property is positioned for pickup."""
+NIGHTTIME DETECTION AID:
+- **T-SHAPED REFLECTIVE MARKERS**: If this is a nighttime/infrared image, look for bright white T-shaped reflective tape on bins
+- These markers were added specifically to help with nighttime detection
+- In infrared images, these will appear as bright white T-shapes
+- However, do NOT rely solely on these markers - bins may be present without visible markers
+
+DETECTION GUIDELINES:
+- Do NOT dismiss potential bins just because they're in shadows or poorly lit
+- Look for typical bin shapes, sizes, and placement patterns
+- Consider the context - bins are typically placed near the curb for collection
+- If you see clear bin shapes OR T-shaped reflective markers, report as detected
+
+CRITICAL PROPERTY BOUNDARY RULE:
+- **ONLY detect bins on THIS property's side of the street** (the camera's side)
+- **IGNORE all bins on the opposite side of the street** - these belong to neighbors across the street
+- **IGNORE bins on neighboring properties** even if they're on the same side of the street
+- Focus ONLY on the curb area directly in front of THIS property where the camera is located
+- When in doubt about which side a bin is on, consider the camera's perspective and property lines
+
+Report detection if you see ANY clear bin shapes OR T-shaped reflective markers ON THIS PROPERTY'S CURB with appropriate confidence level."""
                             },
                             {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{image_base64}"
-                                }
+                                "type": "input_image",
+                                "image_url": f"data:image/jpeg;base64,{image_base64}"
                             }
                         ]
                     }
                 ],
-                response_format={
-                    "type": "json_schema",
-                    "json_schema": {
+                text={
+                    "format": {
+                        "type": "json_schema",
                         "name": "trash_bin_detection",
                         "schema": {
                             "type": "object",
                             "properties": {
                                 "trash_bin_present": {
                                     "type": "boolean",
-                                    "description": "True if a trash bin from THIS property (not across the street) is positioned at the curb for pickup, False otherwise"
+                                    "description": "Whether trash bins are detected at the curb on THIS property"
                                 },
                                 "confidence": {
                                     "type": "string",
@@ -340,7 +361,7 @@ Return a JSON response indicating whether a trash bin from THIS property is posi
                                 },
                                 "description": {
                                     "type": "string",
-                                    "description": "Brief description of what was observed"
+                                    "description": "Detailed description of what was found or not found, including specific locations checked"
                                 }
                             },
                             "required": ["trash_bin_present", "confidence", "description"],
@@ -348,18 +369,20 @@ Return a JSON response indicating whether a trash bin from THIS property is posi
                         },
                         "strict": True
                     }
-                },
-                max_tokens=100
+                }
             )
             
-            # Parse the JSON response
-            result = json.loads(response.choices[0].message.content)
+            # Parse the JSON response from GPT-5
+            raw_content = response.output_text
+            self.log(f"GPT-5 raw response: {repr(raw_content)}")
+            
+            result = json.loads(raw_content)
             
             trash_bin_detected = result["trash_bin_present"]
             confidence = result["confidence"]
             description = result["description"]
             
-            self.log(f"GPT-4o analysis result: trash_bin_present={trash_bin_detected}, confidence={confidence}, description='{description}'")
+            self.log(f"GPT-5 analysis result: trash_bin_present={trash_bin_detected}, confidence={confidence}, description='{description}'")
             
             # Return structured result
             return {
@@ -369,7 +392,7 @@ Return a JSON response indicating whether a trash bin from THIS property is posi
             }
                 
         except Exception as e:
-            self.log(f"Error analyzing image with GPT: {str(e)}", level="ERROR")
+            self.log(f"Error analyzing image with GPT-5: {str(e)}", level="ERROR")
             # Return safe default on error to avoid false alarms
             return {
                 "detected": True,

@@ -8,9 +8,9 @@ trashminder:
   # Camera entity ID to capture images from
   camera_entity: camera.front_yard
   
-  # OpenAI API key for GPT-4o image analysis
+  # OpenAI API key for GPT-5 image analysis
   openai_api_key: !secret openai_api_key
-  
+
   # Pushover configuration for notifications
   pushover_user_key: !secret pushover_user_key
   pushover_api_token: !secret pushover_api_token

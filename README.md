@@ -1,17 +1,17 @@
 # TrashMinder 🗑️
 
-An intelligent trash bin monitoring system for Home Assistant using AppDaemon and GPT-4 Vision.
+An intelligent trash bin monitoring system for Home Assistant using AppDaemon and GPT-5 Vision.
 
 ## Overview
 
-TrashMinder automatically monitors your trash bin placement using computer vision to ensure you never forget to put your bins out for collection. It captures images from your security camera, analyzes them with GPT-4o to detect if bins are positioned at the curb, and sends push notifications if they're not detected during the collection window.
+TrashMinder automatically monitors your trash bin placement using computer vision to ensure you never forget to put your bins out for collection. It captures images from your security camera, analyzes them with GPT-5 to detect if bins are positioned at the curb, and sends push notifications if they're not detected during the collection window.
 
 ## How It Works
 
 ```mermaid
 graph TD
     A[Wednesday 3:00 PM] -->|Start Monitoring| B[Capture Camera Image]
-    B --> C[Send to GPT-4o Vision API]
+    B --> C[Send to GPT-5 Vision API]
     C --> D{Trash Bin<br/>at Curb?}
     D -->|Yes| E[Log Success]
     D -->|No| F[Send Pushover Alert<br/>with Image]
@@ -31,12 +31,23 @@ graph TD
 ## Features
 
 - 📷 **Automated Image Capture**: Takes snapshots from your security camera hourly
-- 🤖 **AI-Powered Detection**: Uses GPT-4o vision to intelligently detect trash bins near the street
+- 🤖 **AI-Powered Detection**: Uses GPT-5 vision to intelligently detect trash bins near the street
 - 📱 **Push Notifications**: Sends alerts via Pushover with attached camera images when bins aren't detected
 - ⏰ **Smart Scheduling**: Monitors from Wednesday 3 PM to Thursday 9 AM (customizable)
 - 🧪 **Test Mode**: Run checks every minute for testing and validation
 - 📊 **Confidence Scoring**: Reports detection confidence levels (high/medium/low)
 - 🏠 **Home Assistant Entity**: Creates `binary_sensor.trashminder_trash_bin_present` for automation integration
+
+## 🌙 Nighttime Detection Enhancement
+
+For improved detection accuracy during nighttime or in low-light infrared camera conditions, it's recommended to add **reflective tape in the shape of a "T"** to your trash bins:
+
+- **What**: Use white or silver reflective tape (available at hardware stores or online)
+- **Where**: Place on the back or side of your bins facing the camera
+- **How**: Form a clear T-shape that will be visible in infrared/nighttime images
+- **Why**: The bright white T-shape helps GPT-5 definitively identify your bins in dark conditions
+
+This enhancement is optional but highly recommended for users with infrared security cameras or bins that are difficult to see at night.
 
 ## Installation
 
@@ -44,7 +55,7 @@ graph TD
 
 1. **Home Assistant** with AppDaemon add-on installed
 2. **Camera Entity** configured in Home Assistant (e.g., `camera.front_yard`)
-3. **OpenAI API Key** with GPT-4o access https://platform.openai.com/api-keys
+3. **OpenAI API Key** with GPT-5 access https://platform.openai.com/api-keys
 4. **Pushover Account** with API token and user key https://pushover.net/
 
 ### Step 1: Install and Configure AppDaemon
@@ -124,7 +135,7 @@ Restart the AppDaemon add-on to load TrashMinder:
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
 | `camera_entity` | Yes | `camera.front_yard` | Home Assistant camera entity ID |
-| `openai_api_key` | Yes | - | OpenAI API key for GPT-4o access |
+| `openai_api_key` | Yes | - | OpenAI API key for GPT-5 access |
 | `pushover_user_key` | Yes | - | Pushover user key for notifications |
 | `pushover_api_token` | Yes | - | Pushover API token |
 | `start_day` | No | `wed` | Day of week to start monitoring (mon, tue, wed, thu, fri, sat, sun) |
@@ -185,9 +196,9 @@ docker logs addon_a0d7b954_appdaemon
    - Check camera is accessible in Home Assistant
    - Ensure AppDaemon has permission to access the camera
 
-4. **GPT-4o API errors**
+4. **GPT-5 API errors**
    - Verify OpenAI API key is valid
-   - Check you have GPT-4o access on your OpenAI account
+   - Check you have GPT-5 access on your OpenAI account
    - Monitor API usage limits
 
 5. **Pushover notifications not received**
@@ -197,7 +208,7 @@ docker logs addon_a0d7b954_appdaemon
 
 ## API Usage & Costs
 
-- **OpenAI GPT-4o**: ~$0.01-0.02 per image analysis
+- **OpenAI GPT-5**: ~$0.01-0.02 per image analysis
 - **Weekly cost estimate**: $0.18-0.36 (18 hourly checks)
 - **Monthly cost estimate**: $0.72-1.44
 
