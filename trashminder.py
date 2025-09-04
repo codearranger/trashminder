@@ -316,9 +316,10 @@ BIN TYPES TO IDENTIFY:
 - Any wheeled waste containers
 
 NIGHTTIME DETECTION AID:
-- **T-SHAPED REFLECTIVE MARKERS**: If this is a nighttime/infrared image, look for bright white T-shaped reflective tape on bins
-- These markers were added specifically to help with nighttime detection
+- **T-SHAPED REFLECTIVE MARKERS**: If you see bright white T-shaped reflective tape on bins, these are ALWAYS our bins
+- These unique markers were added specifically to our bins for nighttime detection
 - In infrared images, these will appear as bright white T-shapes
+- **CRITICAL**: Any bin with a T-shaped reflective marker belongs to THIS property and should ALWAYS be counted as detected
 - However, do NOT rely solely on these markers - bins may be present without visible markers
 
 DETECTION GUIDELINES:
@@ -328,13 +329,21 @@ DETECTION GUIDELINES:
 - If you see clear bin shapes OR T-shaped reflective markers, report as detected
 
 CRITICAL PROPERTY BOUNDARY RULE:
-- **ONLY detect bins on THIS property's side of the street** (the camera's side)
-- **IGNORE all bins on the opposite side of the street** - these belong to neighbors across the street
-- **IGNORE bins on neighboring properties** even if they're on the same side of the street
-- Focus ONLY on the curb area directly in front of THIS property where the camera is located
-- When in doubt about which side a bin is on, consider the camera's perspective and property lines
+- **CAMERA PERSPECTIVE**: You are viewing from a security camera mounted on THIS property looking outward toward the street
+- **PROPERTY IDENTIFICATION**: The area closest to the camera (foreground) is THIS property - bins here should be detected
+- **STREET BOUNDARY**: Any bins across the street (in the background/distance) belong to neighbors - IGNORE these completely
+- **NEIGHBOR BINS**: Even bins on the same side of the street but clearly on neighboring properties should be ignored
+- **DETECTION ZONE**: Only detect bins in the immediate foreground curb area directly accessible from THIS property
+- **DISTANCE CUES**: Bins that appear small/distant are likely across the street - reject these even if clearly visible
+- **T-SHAPED REFLECTIVE MARKERS = ALWAYS OURS**: If you see any T-shaped reflective markers, those bins belong to THIS property regardless of perceived location - always detect them
 
-Report detection if you see ANY clear bin shapes OR T-shaped reflective markers ON THIS PROPERTY'S CURB with appropriate confidence level."""
+SPATIAL REASONING GUIDELINES:
+- Objects closer to the camera (larger, more detailed) = THIS property's side
+- Objects farther from camera (smaller, less detailed) = across the street or neighboring properties
+- Consider the natural viewing angle and depth perspective from a residential security camera
+- T-shaped reflective markers are the definitive identifier - if you see them, it's our bin
+
+Report detection if you see ANY T-shaped reflective markers OR clear bin shapes ON THIS PROPERTY'S CURB with appropriate confidence level."""
                             },
                             {
                                 "type": "input_image",
